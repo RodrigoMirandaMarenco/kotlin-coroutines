@@ -25,9 +25,7 @@ import com.example.android.advancedcoroutines.util.CacheOnSuccess
 import com.example.android.advancedcoroutines.utils.ComparablePair
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 
 /**
@@ -77,6 +75,8 @@ class PlantRepository private constructor(
         get() = plantDao.getPlantsFlow().combine(customSortFlow) { plants, sortOrder ->
             plants.applySort(sortOrder)
         }
+            .flowOn(defaultDispatcher)
+            .conflate()
 
     /**
      * Fetch a list of [Plant]s from the database that matches a given [GrowZone].
