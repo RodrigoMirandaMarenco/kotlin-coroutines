@@ -20,6 +20,7 @@ import androidx.annotation.AnyThread
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.liveData
 import androidx.lifecycle.map
+import androidx.lifecycle.switchMap
 import com.example.android.advancedcoroutines.util.CacheOnSuccess
 import com.example.android.advancedcoroutines.utils.ComparablePair
 import kotlinx.coroutines.CoroutineDispatcher
@@ -57,13 +58,13 @@ class PlantRepository private constructor(
      * Fetch a list of [Plant]s from the database that matches a given [GrowZone].
      * Returns a LiveData-wrapped List of Plants.
      */
-    fun getPlantsWithGrowZone(growZone: GrowZone) = liveData<List<Plant>> {
-        val plantsGrowZoneLiveData = plantDao.getPlantsWithGrowZoneNumber(growZone.number)
-        val customSortOrder = plantListSortOrderCache.getOrAwait()
-        emitSource(plantsGrowZoneLiveData.map { plantList ->
-            plantList.applySort(customSortOrder)
-        })
-    }
+    fun getPlantsWithGrowZone(growZone: GrowZone) =
+        plantDao.getPlantsWithGrowZoneNumber(growZone.number).switchMap { plantList ->
+            liveData {
+                val customSortOrder = plantListSortOrderCache.getOrAwait()
+                emit(plantList.applyMainSafeSort(customSortOrder))
+            }
+        }
 
     /**
      * Returns true if we should make a network request.
